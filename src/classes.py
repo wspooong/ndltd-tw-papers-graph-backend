@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
 class UIDwithScore(BaseModel):
     uid: str
@@ -20,11 +20,11 @@ class Document(BaseModel):
     degree: str
     institution: str
     department: str
-    narrow_field:str
-    detailed_field: str
+    narrow_field:str | None
+    detailed_field: str | None
     graduated_academic_year: int
     url: str
-    keywords: List[str]
+    keywords: List[str] | None
     types_of_paper: str
     language: str
 
@@ -38,4 +38,10 @@ class Edge(BaseModel):
 class Node(BaseModel):
     uid: str
     layer: int
+
+
+class NetworkData(BaseModel):
+    nodes: List[Node]
+    edges: List[Edge]
+    documents: Dict[str, Document]
 
