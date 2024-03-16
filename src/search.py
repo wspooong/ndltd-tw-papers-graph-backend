@@ -14,6 +14,7 @@ warnings.simplefilter("ignore", SecurityWarning)
 
 load_dotenv()
 
+ES_API_URL = os.getenv("ES_API_URL")
 ES_API_ID = os.getenv("ES_API_ID")
 ES_API_KEY = os.getenv("ES_API_KEY")
 
@@ -28,7 +29,7 @@ class Search:
         """
         print(f"{datetime.now()} Connecting to Elasticsearch...")
         self.es = Elasticsearch(
-            hosts="https://localhost:9200",
+            hosts=ES_API_URL,
             api_key=(ES_API_ID, ES_API_KEY),
             verify_certs=False,
         )
