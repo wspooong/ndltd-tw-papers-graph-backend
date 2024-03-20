@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import List
 
 from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse
@@ -14,11 +14,9 @@ es_search = Search()
 def redirect_root_to_docs():
     return RedirectResponse("/docs")
 
-
 @app.get("/api/v1/search_document")
 def search_document(uid: str) -> Document:
     return es_search.get_document_with_id(uid)
-
 
 @app.get("/api/v1/search_similarity_network")
 def search_similarity_network(
