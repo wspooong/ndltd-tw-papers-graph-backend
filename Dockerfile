@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8777
 
 # Start the FastAPI app
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8777"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8777"]
