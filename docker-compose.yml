@@ -1,0 +1,6 @@
+version: '3'
+services:
+  ndltd-graph-backend:
+    image: ndltd-graph-backend
+    ports:
+      - 8777:8777

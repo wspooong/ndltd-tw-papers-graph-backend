@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 from dotenv import load_dotenv
-from elasticsearch import Elasticsearch
+from opensearchpy import OpenSearch
 from urllib3.exceptions import SecurityWarning
 
 from src.classes import Document, Edge, Node, UIDwithEmbedding, UIDwithScore
@@ -14,25 +14,26 @@ warnings.simplefilter("ignore", SecurityWarning)
 
 load_dotenv()
 
-ES_API_ID = os.getenv("ES_API_ID")
-ES_API_KEY = os.getenv("ES_API_KEY")
+OS_API_URL = os.getenv("OS_API_URL")
+OS_API_ID = os.getenv("OS_API_USER")
+OS_API_KEY = os.getenv("OS_API_PWD")
 
 class Search:
     """
-    Class for performing search operations using Elasticsearch.
+    Class for performing search operations using Opensearch.
     """
 
     def __init__(self) -> None:
         """
         Initializes an instance of MyClass.
         """
-        print(f"{datetime.now()} Connecting to Elasticsearch...")
-        self.es = Elasticsearch(
-            hosts="https://localhost:9200",
-            api_key=(ES_API_ID, ES_API_KEY),
-            verify_certs=False,
+        print(f"{datetime.now()} Connecting to Opensearch...")
+        self.opensearch = OpenSearch(
+            hosts=OS_API_URL,
+            http_auth=(OS_API_ID, OS_API_KEY),
+            http_compress = True
         )
-        print(f"{datetime.now()} Connected to Elasticsearch!")
+        print(f"{datetime.now()} Connected to Opensearch!")
 
     def search_title_with_vector(
         self,
@@ -63,11 +64,13 @@ class Search:
         match_list = []
         query = {}
 
+        query["size"] = num_candidates
+
         knn_query = {
-            "field": "embedding",
-            "query_vector": vector,
-            "k": top_k,
-            "num_candidates": num_candidates,
+            "embedding": {
+                "vector": vector,
+                "k": top_k,
+            }
         }
 
         if narrow_field:
@@ -76,13 +79,15 @@ class Search:
             match_list.append({"detailed_field": detailed_field})
 
         if match_list:
-            query = {"bool": {"must": [{"match": x} for x in match_list]}}
+            query["bool"] = {"must": [{"match": x} for x in match_list]}
 
-        response = self.es.search(
+        query["query"] = {"knn": knn_query}
+        query["size"] = top_k
+
+        response = self.opensearch.search(
             index=_INDEX,
-            query=query if query else None,
-            knn=knn_query,
-            fields=["title"],
+            body=query if query else None,
+            _source_includes=["title"],
         )
 
         return [
@@ -104,10 +109,10 @@ class Search:
         Returns:
             Document: The document object.
         """
-        response = self.es.get(
+        response = self.opensearch.get(
             index=_INDEX,
             id=uid,
-            source_excludes=["embedding", "advisor", "title_ws", "abstract_ws"],
+            _source_excludes=["embedding", "advisor", "title_ws", "abstract_ws"],
         )
         return Document(**response["_source"])
 
@@ -121,10 +126,10 @@ class Search:
         Returns:
             UIDwithEmbedding: The document ID and its embedding.
         """
-        response = self.es.get(
+        response = self.opensearch.get(
             index=_INDEX,
             id=uid,
-            source_includes=["embedding"],
+            _source_includes=["embedding"],
         )
         return UIDwithEmbedding(uid=uid, embedding=response["_source"]["embedding"])
 
@@ -181,7 +186,7 @@ class Search:
         Returns:
             int: The total number of documents.
         """
-        response = self.es.count(index=_INDEX)
+        response = self.opensearch.count(index=_INDEX)
         return {"count": response["count"]}
 
     def get_top_ten_field_count(
@@ -208,7 +213,7 @@ class Search:
         )
 
         for field in result.keys():
-            response = self.es.search(
+            response = self.opensearch.search(
                 index=_INDEX,
                 body={
                     "size": 0,
@@ -234,7 +239,7 @@ class Search:
             list: A list of dictionaries containing the institution, department, and count of documents.
 
         """
-        response = self.es.search(
+        response = self.opensearch.search(
             index=_INDEX,
             body={
                 "size": 0,
@@ -284,12 +289,12 @@ class Search:
         Returns:
             List[Document]: A list of Document objects that match the search criteria.
         """
-        response = self.es.search(
+        response = self.opensearch.search(
             index=_INDEX,
             body={
                 "size": 10,
                 "query": {"match": {"title": search_string}},
             },
-            source_excludes=["embedding", "advisor", "title_ws", "abstract_ws"],
+            _source_excludes=["embedding", "advisor", "title_ws", "abstract_ws"],
         )
         return [Document(**x["_source"]) for x in response["hits"]["hits"]]
