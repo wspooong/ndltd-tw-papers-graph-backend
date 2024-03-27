@@ -26,14 +26,7 @@ jobs:
         envkey_OS_API_URL: ${{ secrets.OS_API_URL }}
         envkey_OS_API_USER: ${{ secrets.OS_API_USER }}
         envkey_OS_API_PWD: ${{ secrets.OS_API_PWD }}
-  
-    # - name: Get current time
-    #   uses: josStorer/get-current-time@v2.0.2
-    #   id: current-time
-    #   with:
-    #     format: YYYYMMDD-HHmmSS
-    #     utcOffset: "+08:00"
-      
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -49,7 +42,6 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        # IMAGE_TAG: ${{ steps.current-time.outputs.formattedTime }}
         IMAGE_TAG: production
       run: |
         # Build a docker container and
@@ -59,3 +51,11 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Update ECS service
+      id: update-ecs-service
+      run: | 
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key  ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ${{ secrets.AWS_REGION }}
+          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER }} --service ${{ secrets.ECS_SERVICE_NAME }} --force-new-deployment
