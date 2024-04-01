@@ -24,16 +24,38 @@ class Search:
     """
 
     def __init__(self) -> None:
-        """
-        Initializes an instance of MyClass.
-        """
-        print(f"{datetime.now()} Connecting to Opensearch...")
-        self.opensearch = OpenSearch(
-            hosts=OS_API_URL,
-            http_auth=(OS_API_ID, OS_API_KEY),
-            http_compress = True
-        )
-        print(f"{datetime.now()} Connected to Opensearch!")
+            """
+            Initializes an instance of MyClass.
+
+            This method connects to Opensearch and initializes the `opensearch` attribute.
+            If the `OS_API_URL` contains "localhost", it establishes a connection using the specified URL,
+            authentication credentials, and compression settings. Otherwise, it establishes a connection
+            using the specified URL and authentication credentials.
+
+            Args:
+                None
+
+            Returns:
+                None
+            """
+            print(f"{datetime.now()} Connecting to Opensearch...")
+
+            if "localhost" in OS_API_URL:
+                print(f"{datetime.now()} Using localhost connection...")
+                self.opensearch = OpenSearch(
+                    hosts=OS_API_URL,
+                    http_auth=(OS_API_ID, OS_API_KEY),
+                    http_compress=True,
+                    verify_certs=False,
+                    ssl_show_warn=False
+                )
+            else:
+                self.opensearch = OpenSearch(
+                    hosts=OS_API_URL,
+                    http_auth=(OS_API_ID, OS_API_KEY),
+                    http_compress=True
+                )
+            print(f"{datetime.now()} Connected to Opensearch!")
 
     def search_title_with_vector(
         self,
