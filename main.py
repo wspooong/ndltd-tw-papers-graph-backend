@@ -14,6 +14,10 @@ os_search = Search()
 def redirect_root_to_docs():
     return RedirectResponse("/docs")
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.get("/api/v1/search_document")
 def search_document(uid: str) -> Document:
     return os_search.get_document_with_id(uid)
