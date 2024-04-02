@@ -18,11 +18,11 @@ def redirect_root_to_docs():
 def health_check():
     return {"status": "ok"}
 
-@app.get("/api/v1/search_document")
+@app.get("/api/v1/document", tags=["document"])
 def search_document(uid: str) -> Document:
     return os_search.get_document_with_id(uid)
 
-@app.get("/api/v1/search_similarity_network")
+@app.get("/api/v1/document/similarity", tags=["document"])
 def search_similarity_network(
     uid: str = "109THU00099005", layer: int = Query(2), n_results: int = Query(5)
 ) -> NetworkData:
@@ -31,7 +31,7 @@ def search_similarity_network(
     )
     return {"nodes": node_list, "edges": edge_list, "documents": documents}
 
-@app.get("/api/v1/search_title")
+@app.get("/api/v1/document/title", tags=["document"])
 def search_title(query: str) -> List[Document]:
     return os_search.search_title(query)
 
