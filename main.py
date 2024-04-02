@@ -29,7 +29,7 @@ def search_similarity_network(
     node_list, edge_list, documents = os_search.get_document_similarity_network(
         uid=uid, layer=layer, n_results=n_results
     )
-    return {"nodes": node_list, "edges": edge_list, "documents": documents}
+    return NetworkData(nodes=node_list, edges=edge_list, documents=documents)
 
 @app.get("/api/v1/document/title", tags=["document"])
 def search_title(query: str) -> List[Document]:
