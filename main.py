@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Optional, Annotated
 
-from fastapi import FastAPI, Query
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, Query, Header
+from fastapi.responses import RedirectResponse, StreamingResponse
 
-from src import Search
+from src import Search, RagSummary
 from src.classes import Document, NetworkData
 
 app = FastAPI()
@@ -34,6 +34,24 @@ def search_similarity_network(
 @app.get("/api/v1/document/title", tags=["document"])
 def search_title(query: str) -> List[Document]:
     return os_search.search_title(query)
+
+@app.get("/api/v1/genai/summary/", tags=["genai"])
+def generate_summary(
+    llm_service: str = Query("google"),
+    model_name: str = Query("gemini-1.0-pro"),
+    target_uid: str = Query("109THU00099005"),
+    n_results: int = Query(6),
+    genai_api_key: Annotated[str | None, Header()] = None
+) -> str:
+    rag = RagSummary(
+        os_search=os_search, 
+        llm_service=llm_service, 
+        model_name=model_name, 
+        api_key=genai_api_key, 
+        target_uid=target_uid, 
+        n_results=n_results
+    )
+    return StreamingResponse(rag.run())
 
 if __name__ == "__main__":
     import uvicorn
