@@ -1,13 +1,11 @@
-from typing import Annotated, List
+from typing import Annotated
 
 from fastapi import APIRouter, Header, Query
-from fastapi.responses import StreamingResponse
 
 from app.services.rag import RagSummary
-from app.services.search import Search
+from app.services import os_search
 
 router = APIRouter()
-os_search = Search()
 
 @router.get("/summary")
 def generate_summary(
@@ -16,13 +14,14 @@ def generate_summary(
     target_uid: str = Query("109THU00099005"),
     n_results: int = Query(6),
     genai_api_key: Annotated[str | None, Header()] = None
-) -> str:
+) -> dict:
     rag = RagSummary(
-        os_search=os_search, 
         llm_service=llm_service, 
         model_name=model_name, 
         api_key=genai_api_key, 
         target_uid=target_uid, 
         n_results=n_results
     )
-    return StreamingResponse(rag.run())
+    
+    answer = rag.run()
+    return answer

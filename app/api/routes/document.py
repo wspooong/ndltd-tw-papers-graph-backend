@@ -3,15 +3,13 @@ from typing import List
 from fastapi import APIRouter, Query
 
 from app.services.classes import Document, NetworkData
-from app.services.search import Search
+from app.services import os_search
 
 router = APIRouter()
-os_search = Search()
 
 @router.get("/")
 def search_document(uid: str) -> Document:
     return os_search.get_document_with_id(uid)
-
 
 @router.get("/similarity")
 def search_similarity_network(
