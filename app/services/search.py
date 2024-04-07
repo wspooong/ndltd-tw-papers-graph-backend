@@ -1,22 +1,8 @@
-import os
-import warnings
-from datetime import datetime
 from typing import Dict, List, Tuple, Union
-
-from dotenv import load_dotenv
-from opensearchpy import OpenSearch
-from urllib3.exceptions import SecurityWarning
 
 from app.services.classes import Document, Edge, Node, UIDwithEmbedding, UIDwithScore
 from app.services.constants import _INDEX
-
-warnings.simplefilter("ignore", SecurityWarning)
-
-load_dotenv()
-
-OS_API_URL = os.getenv("OS_API_URL")
-OS_API_ID = os.getenv("OS_API_USER")
-OS_API_KEY = os.getenv("OS_API_PWD")
+from app.services.database import os_client
 
 class Search:
     """
@@ -24,38 +10,10 @@ class Search:
     """
 
     def __init__(self) -> None:
-            """
-            Initializes an instance of MyClass.
-
-            This method connects to Opensearch and initializes the `opensearch` attribute.
-            If the `OS_API_URL` contains "localhost", it establishes a connection using the specified URL,
-            authentication credentials, and compression settings. Otherwise, it establishes a connection
-            using the specified URL and authentication credentials.
-
-            Args:
-                None
-
-            Returns:
-                None
-            """
-            print(f"{datetime.now()} Connecting to Opensearch...")
-
-            if "localhost" in OS_API_URL:
-                print(f"{datetime.now()} Using localhost connection...")
-                self.opensearch = OpenSearch(
-                    hosts=OS_API_URL,
-                    http_auth=(OS_API_ID, OS_API_KEY),
-                    http_compress=True,
-                    verify_certs=False,
-                    ssl_show_warn=False
-                )
-            else:
-                self.opensearch = OpenSearch(
-                    hosts=OS_API_URL,
-                    http_auth=(OS_API_ID, OS_API_KEY),
-                    http_compress=True
-                )
-            print(f"{datetime.now()} Connected to Opensearch!")
+        """
+        Initializes the Search class.
+        """
+        self.opensearch = os_client
 
     def search_title_with_vector(
         self,
@@ -211,8 +169,9 @@ class Search:
         response = self.opensearch.count(index=_INDEX)
         return {"count": response["count"]}
 
-    def get_top_ten_field_count(
-        self, year: int
+    def get_top_field_count(
+        self, 
+        year: int,
     ) -> Dict[str, List[Dict[str, Union[str, int]]]]:
         """
         Retrieves the top ten field counts for various fields in the search index.
@@ -238,7 +197,6 @@ class Search:
             response = self.opensearch.search(
                 index=_INDEX,
                 body={
-                    "size": 0,
                     "query": {
                         "bool": {"filter": {"term": {"graduated_academic_year": year}}}
                     },
@@ -320,3 +278,6 @@ class Search:
             _source_excludes=["embedding", "advisor", "title_ws", "abstract_ws"],
         )
         return [Document(**x["_source"]) for x in response["hits"]["hits"]]
+
+
+os_search = Search()
